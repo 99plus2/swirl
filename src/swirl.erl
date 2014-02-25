@@ -24,14 +24,41 @@
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 
--export([main/1, start/0]).
+-export([main/1,
+        start_peer/0,
+        start_peer/1,
+        start_peers/1,
+        stop_peer/0,
+        stop_peer/1,
+        stop_peers/1,
+         start/0]).
 
 %% for erl and swirl from terminal
 start() ->
-    application:start(?MODULE).
+    {ok, _} = application:ensure_all_started(?MODULE),
+    ok.
+
+start_peer() ->
+    start_peer(?SWIRL_PORT).
+start_peer(Port) when is_integer(Port) ->
+    supervisor:start_child(peer_sup, [Port]).
+
+start_peers(Ports) when is_list(Ports) ->
+    lists:map(fun(Port) -> start_peer(Port) end, Ports).
+
+stop_peer() ->
+    stop_peer(?SWIRL_PORT).
+stop_peer(Port) when is_integer(Port) ->
+    %% TODO make this work
+    %% supervisor:terminate_child(peer_sup, [Port]).
+    ok.
+
+stop_peers(Ports) when is_list(Ports) ->
+    lists:map(fun(Port) -> stop_peer(Port) end, Ports).
 
 %% for escript support
 main(_) ->
     start(),
-    io:format("^C to exit~n", []),
+    start_peer(),
+    ?INFO("^C to exit~n", []),
     timer:sleep(infinity).

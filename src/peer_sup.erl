@@ -17,33 +17,42 @@
 
 -behaviour(supervisor).
 
-%% API
--export([start_link/0]).
+%% api
+-export([start_link/0,
+         start_child/1 ]).
 
-%% Supervisor callbacks
+%% callbacks
 -export([init/1]).
 
-%% Helper macro for declaring children of supervisor
--define(CHILD(I, Type), {I, {I, start_link, []}, permanent, 5000, Type, [I]}).
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% api
 
-%% ===================================================================
-%% API functions
-%% ===================================================================
-
--spec start_link() -> {ok, pid()}.
+-spec start_link() -> {ok, pid()} | ignore | {error, any()}.
 start_link() ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
-%% ===================================================================
-%% Supervisor callbacks
-%% ===================================================================
+%%-spec start_child(port()) -> ok.
+start_child([]) ->
+    start_child([?SWIRL_PORT]);
+start_child([Port]) when is_integer(Port) ->
+    supervisor:start_child(?MODULE, [Port]).
 
-init([]) ->
-    init([?SWIRL_PORT]);
-init([Port]) ->
-    {ok, {{simple_one_for_one, 10, 60},
-          [{peer_worker,
-            {peer_worker, start_link, [Port]},
-            permanent, 1000, worker, [peer_worker]}] }};
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% callbacks
 
-init(Ports) when is_list(Ports) -> ok.
+init([])->
+    RestartStrategy = simple_one_for_one,
+    MaxRestarts = 10,
+    MaxSecondsBetweenRestarts = 60,
+    Options = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},
+    Restart = permanent,
+    Shutdown = 1000,
+    Type = worker,
+
+    Worker = {peer_worker, {peer_worker, start_link, []},
+	      Restart,
+              Shutdown,
+              Type,
+              [peer_worker]},
+
+    {ok, {Options, [Worker]}}.

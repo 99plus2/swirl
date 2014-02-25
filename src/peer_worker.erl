@@ -64,8 +64,11 @@ stop() ->
 init([]) ->
     init([?SWIRL_PORT]);
 init([Port]) ->
-    {ok, Socket} = gen_udp:open(Port,  [binary, {active, true} ]),
-    ?INFO("peer: listening on udp:~p~n", [Port]),
+    process_flag(trap_exit, true),
+    {ok, Socket} = gen_udp:open(Port,  [binary,
+        {reuseaddr, true},
+        {active, true} ]),
+    ?INFO("peer: ~p listening on udp:~p~n", [self(), Port]),
     {ok, [#state{port = Port, socket = Socket}] }.
 
 handle_call(Message, _From, State) ->
@@ -91,11 +94,11 @@ handle_info(Message, State) ->
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
-terminate(Reason, State) ->
-    gen_udp:close(State#state.socket),
+terminate(Reason, [State=#state{socket=Socket, port=Port}]) ->
+    gen_udp:close(Socket),
     {memory, Bytes} = erlang:process_info(self(), memory),
-    ?INFO("peer: terminating port ~p, using ~p bytes, due to reason: ~p~n",
-          [State#state.port, Bytes, Reason]).
+    ?INFO("peer: ~p terminating port ~p, using ~p bytes, due to reason: ~p~n",
+          [self(), Port, Bytes, Reason]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% test
