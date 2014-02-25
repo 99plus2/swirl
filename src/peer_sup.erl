@@ -39,5 +39,11 @@ start_link() ->
 %% ===================================================================
 
 init([]) ->
-	Workers = [],
-	{ok, {{one_for_one, 10, 60}, Workers}}.
+    init([?SWIRL_PORT]);
+init([Port]) ->
+    {ok, {{simple_one_for_one, 10, 60},
+          [{peer_worker,
+            {peer_worker, start_link, [Port]},
+            permanent, 1000, worker, [peer_worker]}] }};
+
+init(Ports) when is_list(Ports) -> ok.
