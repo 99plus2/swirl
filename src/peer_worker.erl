@@ -24,7 +24,6 @@
 %% api
 -export([start_link/1,
          start_link/0,
-         handle_datagram/6,
          stop/0]).
 
 %% gen_server callbacks
@@ -60,23 +59,6 @@ start_link() ->
 stop() ->
     gen_server:cast(?MODULE, stop).
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% @doc parses a datagram and delivers it to the correct channel
-%% @spec handle_datagram() -> ok
-%% @end
-handle_datagram(udp, _Socket, Peer, Port, Maybe_Datagram, State) ->
-    Endpoint = convert:endpoint_to_string(Peer, Port),
-    ?INFO("peer: recv udp from ~s~n", [Endpoint]),
-    Transport = orddict:from_list([ {peer, Peer},
-                                    {port, Port},
-                                    {endpoint, Endpoint},
-                                    {transport, udp},
-                                    {state, State}]),
-    {ok, Datagram} = ppspp_datagram:unpack(Transport, Maybe_Datagram),
-    % NB usually called from spawned process, so return values are ignored
-    ppspp_datagram:handle(Datagram).
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% gen_server callbacks
 init([]) ->
@@ -97,8 +79,8 @@ handle_cast(Message, State) ->
     {stop, {error, {unknown_cast, Message}}, State}.
 
 
-handle_info({udp, Peer, Port, Maybe_Datagram}, State) ->
-    spawn(?MODULE, handle_datagram, [udp, Peer, Port, Maybe_Datagram, State]),
+handle_info({udp, Socket, Peer, Port, Maybe_Datagram}, State) ->
+    spawn(ppspp_datagram, handle, [udp, Socket, Peer, Port, Maybe_Datagram, State]),
     {noreply, State};
 handle_info(timeout, State) ->
     ?WARN("peer: timeout: ~p~n", State);
