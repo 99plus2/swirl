@@ -28,6 +28,7 @@
 -export([bin_to_hex/1,
          bin_to_string/1,
          hex_string_to_padded_binary/1,
+         port_to_atom/1,
          endpoint_to_string/2,
          channel_to_string/1]).
 
@@ -47,3 +48,7 @@ hex_string_to_padded_binary(String) when is_list(String) ->
     Bytes_Length = (length(String) + 1) div 2,
     {ok, [Int], []} = io_lib:fread("~16u", String),
     <<Int:Bytes_Length/big-unsigned-integer-unit:8>>.
+
+port_to_atom(Port) when is_integer(Port), Port > 0 ->
+    list_to_atom(lists:flatten(
+        io_lib:format("~s_~4.16.0b", [?SWIRL_APP, 7777]) )).
