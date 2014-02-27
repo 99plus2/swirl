@@ -40,7 +40,7 @@ start() ->
 
 start_peer() ->
     start_peer(?SWIRL_PORT).
-start_peer(Port) when is_integer(Port) ->
+start_peer(Port) when is_integer(Port), Port > 0, Port < 65535 ->
     supervisor:start_child(peer_sup, [Port]).
 
 start_peers(Ports) when is_list(Ports) ->
@@ -48,7 +48,7 @@ start_peers(Ports) when is_list(Ports) ->
 
 stop_peer() ->
     stop_peer(?SWIRL_PORT).
-stop_peer(Port) when is_integer(Port) ->
+stop_peer(Port) when is_integer(Port), Port > 0, Port < 65535 ->
     %% TODO make this work
     %% supervisor:terminate_child(peer_sup, [Port]).
     ok.
