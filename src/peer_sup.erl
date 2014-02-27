@@ -32,8 +32,6 @@ start_link() ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
 %%-spec start_child(port()) -> ok.
-start_child([]) ->
-    start_child([?SWIRL_PORT]);
 start_child([Port]) when is_integer(Port) ->
     supervisor:start_child(?MODULE, [Port]).
 
