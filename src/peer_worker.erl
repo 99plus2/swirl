@@ -23,8 +23,8 @@
 
 %% api
 -export([start_link/1,
-         start_link/0,
-         stop/0]).
+         start_link/2,
+         stop/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -44,25 +44,23 @@
 %% where
 %%  Pid = pid()
 %% @end
-start_link(Port) ->
-    gen_server:start_link({local, ?MODULE}, ?MODULE, [Port], []).
-
 %% @spec start_link() -> {ok, Pid}
 %% @doc Calls `start_link(Port)' using the default port.
-start_link() ->
-    start_link(?SWIRL_PORT).
+start_link(Port) when is_integer(Port) ->
+    start_link(Port, convert:port_to_atom(Port)).
+
+start_link(Port, Name) when is_atom(Name) ->
+    gen_server:start_link({local, Name}, ?MODULE, [Port], []).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc Stops the server.
-%% @spec stop() -> ok
+%% @spec stop(port()) -> ok
 %% @end
-stop() ->
-    gen_server:cast(?MODULE, stop).
+stop(Port) ->
+    gen_server:call(convert:port_to_atom(Port), stop).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% gen_server callbacks
-init([]) ->
-    init([?SWIRL_PORT]);
 init([Port]) ->
     process_flag(trap_exit, true),
     {ok, Socket} = gen_udp:open(Port,  [binary,

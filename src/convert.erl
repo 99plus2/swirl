@@ -51,4 +51,4 @@ hex_string_to_padded_binary(String) when is_list(String) ->
 
 port_to_atom(Port) when is_integer(Port), Port > 0 ->
     list_to_atom(lists:flatten(
-        io_lib:format("~s_~4.16.0b", [?SWIRL_APP, 7777]) )).
+        io_lib:format("~s_peer_~4.16.0b", [?SWIRL_APP, 7777]) )).

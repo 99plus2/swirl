@@ -49,12 +49,13 @@ start_peers(Ports) when is_list(Ports) ->
 stop_peer() ->
     stop_peer(?SWIRL_PORT).
 stop_peer(Port) when is_integer(Port), Port > 0, Port < 65535 ->
-    %% TODO make this work
-    %% supervisor:terminate_child(peer_sup, [Port]).
-    ok.
+    Worker_pid = whereis(convert:port_to_atom(Port)),
+    supervisor:terminate_child(peer_sup, Worker_pid).
 
 stop_peers(Ports) when is_list(Ports) ->
-    lists:map(fun(Port) -> stop_peer(Port) end, Ports).
+    lists:map(fun(Port) ->
+            {stop_peer(Port), Port} end,
+        Ports).
 
 %% for escript support
 main(_) ->
